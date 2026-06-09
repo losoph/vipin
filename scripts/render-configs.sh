@@ -82,6 +82,7 @@ cat >"$ROOT_DIR/configs/xray/config.json" <<EOF
           ],
           "privateKey": "${XRAY_REALITY_PRIVATE_KEY}",
           "shortIds": [
+            "",
             "${XRAY_REALITY_SHORT_ID}"
           ]
         }
