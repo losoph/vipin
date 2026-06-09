@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+
+configs/xray/config.json
+configs/hysteria/config.yaml
+configs/caddy/Caddyfile
+generated/
+secrets/
+data/
+.acme.sh/
+
+.DS_Store
+

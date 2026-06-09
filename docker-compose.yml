@@ -1,0 +1,76 @@
+services:
+  caddy:
+    image: ${CADDY_IMAGE:-caddy}:${CADDY_IMAGE_TAG:-2-alpine}
+    container_name: vipin-caddy
+    restart: unless-stopped
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    ports:
+      - "${ACME_PORT:-80}:80/tcp"
+    volumes:
+      - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./static/www:/srv/www:ro
+      - ./static/acme:/srv/acme
+    networks:
+      - vipin
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  xray:
+    image: ${XRAY_IMAGE:-ghcr.io/xtls/xray-core}:${XRAY_IMAGE_TAG:-latest}
+    container_name: vipin-xray
+    restart: unless-stopped
+    command: ["run", "-config", "/etc/xray/config.json"]
+    ports:
+      - "${XRAY_PORT:-443}:443/tcp"
+    volumes:
+      - ./configs/xray/config.json:/etc/xray/config.json:ro
+    networks:
+      - vipin
+    depends_on:
+      caddy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "xray", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  hysteria:
+    image: ${HYSTERIA_IMAGE:-tobyxdd/hysteria}:${HYSTERIA_IMAGE_TAG:-latest}
+    container_name: vipin-hysteria2
+    restart: unless-stopped
+    command: ["server", "-c", "/etc/hysteria/config.yaml"]
+    ports:
+      - "${HYSTERIA_PORT:-443}:443/udp"
+    volumes:
+      - ./configs/hysteria/config.yaml:/etc/hysteria/config.yaml:ro
+      - ./secrets/tls:/etc/hysteria/tls:ro
+    networks:
+      - vipin
+    healthcheck:
+      test: ["CMD", "hysteria", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  vipin:
+    name: vipin
