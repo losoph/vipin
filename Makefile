@@ -1,4 +1,4 @@
-.PHONY: init render up down restart logs ps config check tls renew-tls guardrails harden status
+.PHONY: init render up down restart logs ps config check tls renew-tls guardrails harden status diagnose firewall-sync
 
 init:
 	./scripts/init-env.sh
@@ -26,7 +26,8 @@ config:
 
 check:
 	sh -n scripts/init-env.sh scripts/render-configs.sh scripts/dev-self-signed-cert.sh \
-		scripts/issue-tls.sh scripts/renew-tls.sh scripts/guardrails.sh scripts/harden-vps.sh
+		scripts/issue-tls.sh scripts/renew-tls.sh scripts/guardrails.sh scripts/harden-vps.sh \
+		scripts/diagnose-host.sh scripts/ufw-sync.sh
 	@if command -v docker >/dev/null 2>&1; then \
 		docker compose config >/dev/null; \
 	else \
@@ -46,3 +47,9 @@ status: guardrails ps
 
 harden:
 	@echo "Run on the VPS as root: sudo ./scripts/harden-vps.sh"
+
+diagnose:
+	./scripts/diagnose-host.sh
+
+firewall-sync:
+	@echo "Run on the VPS as root: sudo ./scripts/ufw-sync.sh"

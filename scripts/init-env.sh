@@ -57,17 +57,27 @@ XRAY_REALITY_PRIVATE_KEY=$(
     -e 's/^PrivateKey: //p' \
     | head -n 1
 )
+
+if [ -z "$XRAY_REALITY_PRIVATE_KEY" ]; then
+  echo "Could not parse Xray REALITY private key. Raw output:" >&2
+  printf '%s\n' "$REALITY_KEYS" >&2
+  exit 1
+fi
+
+echo "Deriving REALITY client public key from private key..."
+DERIVED_KEYS=$(docker run --rm "${XRAY_IMAGE}:${XRAY_IMAGE_TAG}" x25519 -i "$XRAY_REALITY_PRIVATE_KEY")
 XRAY_REALITY_PUBLIC_KEY=$(
-  printf '%s\n' "$REALITY_KEYS" | sed -n \
+  printf '%s\n' "$DERIVED_KEYS" | sed -n \
     -e 's/^Public key: //p' \
-    -e 's/^Password (PublicKey): //p' \
     -e 's/^PublicKey: //p' \
+    -e 's/^Password (PublicKey): //p' \
+    -e 's/^Password: //p' \
     | head -n 1
 )
 
-if [ -z "$XRAY_REALITY_PRIVATE_KEY" ] || [ -z "$XRAY_REALITY_PUBLIC_KEY" ]; then
-  echo "Could not parse Xray REALITY keys. Raw output:" >&2
-  printf '%s\n' "$REALITY_KEYS" >&2
+if [ -z "$XRAY_REALITY_PUBLIC_KEY" ]; then
+  echo "Could not derive Xray REALITY public key. Raw output:" >&2
+  printf '%s\n' "$DERIVED_KEYS" >&2
   exit 1
 fi
 

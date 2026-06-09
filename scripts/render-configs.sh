@@ -160,7 +160,7 @@ cat >"$ROOT_DIR/configs/caddy/Caddyfile" <<EOF
 }
 EOF
 
-VLESS_LINK="vless://${XRAY_CLIENT_UUID}@${VIPIN_DOMAIN}:${XRAY_PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${XRAY_REALITY_SERVER_NAME}&fp=chrome&pbk=${XRAY_REALITY_PUBLIC_KEY}&sid=${XRAY_REALITY_SHORT_ID}&type=tcp&headerType=none#vipin-xray-reality"
+VLESS_LINK="vless://${XRAY_CLIENT_UUID}@${VIPIN_DOMAIN}:${XRAY_PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${XRAY_REALITY_SERVER_NAME}&fp=chrome&pbk=${XRAY_REALITY_PUBLIC_KEY}&sid=${XRAY_REALITY_SHORT_ID}&type=tcp#vipin-xray-reality"
 HYSTERIA_LINK="hysteria2://${HYSTERIA_PASSWORD}@${VIPIN_DOMAIN}:${HYSTERIA_PORT}/?sni=${VIPIN_DOMAIN}&insecure=${HYSTERIA_INSECURE}&obfs=salamander&obfs-password=${HYSTERIA_OBFS_PASSWORD}#vipin-hysteria2"
 
 cat >"$ROOT_DIR/generated/client-profiles.txt" <<EOF

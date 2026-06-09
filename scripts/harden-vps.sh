@@ -8,6 +8,10 @@ SSH_PORT="${VIPIN_SSH_PORT:-22}"
 ACME_PORT="${ACME_PORT:-80}"
 XRAY_PORT="${XRAY_PORT:-443}"
 HYSTERIA_PORT="${HYSTERIA_PORT:-443}"
+MTPROTO_PORT="${MTPROTO_PORT:-}"
+WG_PORT="${WG_PORT:-51820}"
+VIPIN_EXTRA_TCP_PORTS="${VIPIN_EXTRA_TCP_PORTS:-}"
+VIPIN_EXTRA_UDP_PORTS="${VIPIN_EXTRA_UDP_PORTS:-}"
 DRY_RUN=0
 
 usage() {
@@ -17,12 +21,16 @@ Apply a minimal host firewall for vipin on Ubuntu.
 Usage:
   ./scripts/harden-vps.sh [--dry-run]
 
-Opens only:
+Opens:
   - SSH (VIPIN_SSH_PORT, default 22)
   - ACME HTTP (ACME_PORT, default 80)
   - Xray REALITY (XRAY_PORT/tcp, default 443)
   - Hysteria2 (HYSTERIA_PORT/udp, default 443)
+  - MTProto (MTPROTO_PORT/tcp, optional)
+  - WireGuard (WG_PORT/udp, default 51820)
+  - VIPIN_EXTRA_TCP_PORTS / VIPIN_EXTRA_UDP_PORTS (optional)
 
+To add ports without wiping existing UFW rules, use scripts/ufw-sync.sh instead.
 Environment overrides can come from .env.
 EOF
 }
@@ -54,6 +62,10 @@ if [ -f "$ENV_FILE" ]; then
   ACME_PORT="${ACME_PORT:-80}"
   XRAY_PORT="${XRAY_PORT:-443}"
   HYSTERIA_PORT="${HYSTERIA_PORT:-443}"
+  MTPROTO_PORT="${MTPROTO_PORT:-}"
+  WG_PORT="${WG_PORT:-51820}"
+  VIPIN_EXTRA_TCP_PORTS="${VIPIN_EXTRA_TCP_PORTS:-}"
+  VIPIN_EXTRA_UDP_PORTS="${VIPIN_EXTRA_UDP_PORTS:-}"
 fi
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -81,6 +93,9 @@ SSH:      ${SSH_PORT}/tcp
 ACME:     ${ACME_PORT}/tcp
 Xray:     ${XRAY_PORT}/tcp
 Hysteria: ${HYSTERIA_PORT}/udp
+MTProto:  ${MTPROTO_PORT:-disabled}/tcp
+WireGuard:${WG_PORT}/udp
+Extras:   tcp=${VIPIN_EXTRA_TCP_PORTS:-none} udp=${VIPIN_EXTRA_UDP_PORTS:-none}
 EOF
 
 if [ "$DRY_RUN" -eq 1 ]; then
@@ -94,6 +109,24 @@ run ufw allow "${SSH_PORT}/tcp" comment 'vipin ssh'
 run ufw allow "${ACME_PORT}/tcp" comment 'vipin acme'
 run ufw allow "${XRAY_PORT}/tcp" comment 'vipin xray'
 run ufw allow "${HYSTERIA_PORT}/udp" comment 'vipin hysteria'
+if [ -n "$MTPROTO_PORT" ]; then
+  run ufw allow "${MTPROTO_PORT}/tcp" comment 'mtproto'
+fi
+run ufw allow "${WG_PORT}/udp" comment 'wireguard'
+if [ -n "$VIPIN_EXTRA_TCP_PORTS" ]; then
+  # shellcheck disable=SC2086
+  set -- $(printf '%s' "$VIPIN_EXTRA_TCP_PORTS" | tr ',' ' ')
+  for port in "$@"; do
+    run ufw allow "${port}/tcp" comment 'extra tcp'
+  done
+fi
+if [ -n "$VIPIN_EXTRA_UDP_PORTS" ]; then
+  # shellcheck disable=SC2086
+  set -- $(printf '%s' "$VIPIN_EXTRA_UDP_PORTS" | tr ',' ' ')
+  for port in "$@"; do
+    run ufw allow "${port}/udp" comment 'extra udp'
+  done
+fi
 run ufw --force enable
 
 if [ "$DRY_RUN" -eq 0 ]; then
