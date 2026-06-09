@@ -50,7 +50,9 @@ mkdir -p \
 cat >"$ROOT_DIR/configs/xray/config.json" <<EOF
 {
   "log": {
-    "loglevel": "warning"
+    "loglevel": "info",
+    "access": "/dev/stdout",
+    "error": "/dev/stderr"
   },
   "inbounds": [
     {
@@ -103,13 +105,26 @@ cat >"$ROOT_DIR/configs/xray/config.json" <<EOF
   "outbounds": [
     {
       "protocol": "freedom",
-      "tag": "direct"
+      "tag": "direct",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
     },
     {
       "protocol": "blackhole",
       "tag": "block"
     }
-  ]
+  ],
+  "routing": {
+    "domainStrategy": "UseIPv4",
+    "rules": [
+      {
+        "type": "field",
+        "network": "tcp,udp",
+        "outboundTag": "direct"
+      }
+    ]
+  }
 }
 EOF
 
