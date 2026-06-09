@@ -49,8 +49,21 @@ fi
 
 echo "Generating Xray REALITY keypair with Docker image ${XRAY_IMAGE}:${XRAY_IMAGE_TAG}..."
 REALITY_KEYS=$(docker run --rm "${XRAY_IMAGE}:${XRAY_IMAGE_TAG}" x25519)
-XRAY_REALITY_PRIVATE_KEY=$(printf '%s\n' "$REALITY_KEYS" | awk -F': ' '/Private key/ {print $2}')
-XRAY_REALITY_PUBLIC_KEY=$(printf '%s\n' "$REALITY_KEYS" | awk -F': ' '/Public key/ {print $2}')
+# Xray <=v25: "Private key" / "Public key"
+# Xray >=v26: "PrivateKey" / "Password (PublicKey)"
+XRAY_REALITY_PRIVATE_KEY=$(
+  printf '%s\n' "$REALITY_KEYS" | sed -n \
+    -e 's/^Private key: //p' \
+    -e 's/^PrivateKey: //p' \
+    | head -n 1
+)
+XRAY_REALITY_PUBLIC_KEY=$(
+  printf '%s\n' "$REALITY_KEYS" | sed -n \
+    -e 's/^Public key: //p' \
+    -e 's/^Password (PublicKey): //p' \
+    -e 's/^PublicKey: //p' \
+    | head -n 1
+)
 
 if [ -z "$XRAY_REALITY_PRIVATE_KEY" ] || [ -z "$XRAY_REALITY_PUBLIC_KEY" ]; then
   echo "Could not parse Xray REALITY keys. Raw output:" >&2
